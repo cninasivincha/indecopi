@@ -1,0 +1,225 @@
+---
+title: "Barreras burocráticas de Indecopi"
+subtitle: "Manos a la data"
+author: "Ninasivincha"
+date: "Creado el `r Sys.Date()`"
+output: tint::tintHtml
+bibliography: skeleton.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tint)
+# invalidate cache when the package version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tint'))
+options(htmltools.dir.version = FALSE)
+```
+
+# Indecopi
+
+![Indecopi - Sede Central](https://portal.andina.pe/EDPfotografia/Thumbnail/2014/02/06/000232998W.jpg)
+El *Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual*, es un organismo público autónomo especializado del Estado Peruano, adscrito a la Presidencia del Consejo de Ministros, con personería jurídica de derecho público.
+
+
+```{r mis-configuraciones-iniciales, fig.margin=TRUE, fig.width=4, fig.height=4, cache=FALSE, echo=FALSE,message=FALSE,comment=FALSE,warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(ggalluvial)
+library(parcats)
+library(easyalluvial)
+library(forcats)
+library(DataExplorer)
+
+setwd("C:/Users/Christian/Desktop/2020-1/BESTBehavorial/SESION 3/MDv01sesion3_parte-practica-master/MDv01sesion3_parte-practica-master/1 Indecopi")
+barreras <- readxl::read_xls("Data Logros al 31.12.2017.xls",skip = 1)
+
+
+barreras <- barreras %>%
+  mutate(TIPO_ENTIDAD = case_when(
+                          grepl("MUNICIPALIDA", ENTIDAD) ~ "Gobierno Regional",
+                          grepl("UNIVERSIDAD", ENTIDAD) ~ "Universidad",
+                          grepl("MINISTERIO", ENTIDAD) ~ "Ejecutivo",
+                          grepl("ASAMBLEA", ENTIDAD) ~ "Universidad",
+                          grepl("SEGURO SOCIAL DE SALUD", ENTIDAD) ~ "Otras instituciones del Estado",
+                          grepl("COLEGIO ODONTOLÓGICO", ENTIDAD) ~ "Colegios profesionales",
+                          grepl("REGISTRO NACIONAL", ENTIDAD) ~ "Otras instituciones del Estado",
+                          grepl("SUPERINTENDENCIA", ENTIDAD) ~ "Instituciones autónomas del Estado",
+                          grepl("PRESIDENCIA DEL CONSEJO", ENTIDAD) ~ "Ejecutivo",
+                          grepl("AUTORIDAD PORTUARIA", ENTIDAD) ~ "Otras instituciones del Estado",
+                          grepl("DEFENSORIA DEL", ENTIDAD) ~ "Instituciones autónomas del Estado",
+                          grepl("SERVICIO NACIONAL", ENTIDAD) ~ "Otras instituciones del Estado",
+                          
+                          )
+  )
+
+barreras <- barreras %>%
+  mutate(`TIPO DE ACTUACIÓN` = case_when(
+    grepl("iNVESTIGACIÓN DE OFICIO", `TIPO DE ACTUACIÓN`) ~ "INVESTIGACIÓN DE OFICIO",
+    TRUE~`TIPO DE ACTUACIÓN`
+  )
+  )
+
+
+barreras <- barreras %>%
+  mutate(TIPO_BARRERA = case_when(
+    grepl("ORDEN", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD == "Gobierno Regional" ~ "Ordenanzas de gobiernos regionales"   
+  )
+  )
+
+barreras <- barreras %>%
+  mutate(TIPO_BARRERA = case_when(
+    grepl("ORDEN", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("RESOLUC", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Universidad") ~ "Resolución universitaria",   
+    grepl("DECRE", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Decreto de gobiernos regionales"  ,
+    grepl("Ordenanza", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("ODENANZA", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("DECRETO SUPREMO", `NORMA QUE ESTABLECÍA LA BARRERA`) & TIPO_ENTIDAD %in% c("Ejecutivo") ~ "DECRETO SUPREMO"  ,
+    grepl("PORTAL", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "Web"  ,
+    grepl("RESOLUCIÓN MINISTERIAL", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "RESOLUCIÓN MINISTERIAL"  ,
+    grepl("WEB INSTITUCIONA", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "Web"  ,
+    grepl("RESOLUCIÓN DEFENSORIAL", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "RESOLUCIÓN DEFENSORIAL"  ,
+    grepl("DECRETO SUPREMO", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "DECRETO SUPREMO"  ,
+    grepl("RESOLUCIÓN JEFATURAL", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "RESOLUCIÓN JEFATURAL"  ,
+    grepl("DIRECTIVA", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "Directiva"  ,
+    grepl("REGLAMENTO", `NORMA QUE ESTABLECÍA LA BARRERA`) ~ "Reglamento"  ,
+    
+    
+  )
+  )
+
+
+
+
+
+
+ 
+barreras2 <- barreras %>% filter(TIPO_BARRERA %in% c(NA))
+
+#### Adecuación
+
+
+barreras <- barreras %>%
+  mutate(TIPO_ADECUACION = case_when(
+    grepl("ORDEN", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("RESOLUC", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Universidad") ~ "Resolución universitaria",   
+    grepl("DECRE", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Decreto de gobiernos regionales"  ,
+    grepl("Ordenanza", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("ODENANZA", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Ordenanza de gobiernos regionales"  ,
+    grepl("DECRETO SUPREMO", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Ejecutivo") ~ "DECRETO SUPREMO"  ,
+    grepl("PORTAL", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "Web"  ,
+    grepl("RESOLUCIÓN MINISTERIAL", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "RESOLUCIÓN MINISTERIAL"  ,
+    grepl("WEB INSTITUCIONA", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "Web"  ,
+    grepl("RESOLUCIÓN DEFENSORIAL", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "RESOLUCIÓN DEFENSORIAL"  ,
+    grepl("DECRETO SUPREMO", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "DECRETO SUPREMO"  ,
+    grepl("RESOLUCIÓN JEFATURAL", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "RESOLUCIÓN JEFATURAL"  ,
+    grepl("DIRECTIVA", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "Directiva"  ,
+    grepl("REGLAMENTO", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "Reglamento"  ,
+    grepl("CONCLUSIÓN DEL PROCEDIMIENTO", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "CONCLUSIÓN DEL PROCEDIMIENTO"  ,
+    grepl("Decreto de Alcaldía", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) & TIPO_ENTIDAD %in% c("Gobierno Regional") ~ "Decreto de gobiernos regionales"  ,
+    grepl("RESOLUCIÓN DE GERENCIA GENERAL", `ADECUACIÓN (NORMA QUE ELIMINA BARRERA)`) ~ "Reglamento"  ,
+    
+    
+  )
+  )
+
+barreras2 <- barreras %>% filter(TIPO_ADECUACION %in% c(NA))
+
+barreras <- barreras %>%
+  mutate(REVERSION = case_when(TIPO_ADECUACION==TIPO_BARRERA ~ "SI",
+                               TRUE ~ "NO"))
+
+barreras3 <-  barreras %>% select(REVERSION,`TIPO DE ACTUACIÓN`,TIPO_ENTIDAD,TIPO_BARRERA,TIPO_ADECUACION)
+barreras3 <-  barreras %>% select(`TIPO DE ACTUACIÓN`,TIPO_ENTIDAD,TIPO_BARRERA,TIPO_ADECUACION,REVERSION)
+
+
+barreras3 <- lapply(barreras3,function(x) as_factor(x))
+barreras3 <- as.data.frame(barreras3)
+p <-  alluvial_wide(barreras3, max_variables = 5)
+
+
+
+```
+
+
+# Caso barreras burocráticas
+
+## Primer vistazo de la data
+Se ha clasificado la cantidad de barreras burocraticas por **entidad**, obteniendo la siguiente tabla resumen
+
+```{r grafico_general1, echo=FALSE,fig.height=30,comment=F,warning=FALSE,message=FALSE,cache=FALSE,fig.width=10, fig.height=15,fig.cap = "Tabla Resumen 1"}
+
+
+barreras %>% # la BD!
+  group_by(`ENTIDAD`) %>% # agrupala segun...
+  summarise(numero=n())%>% # crea una nueva variable
+  arrange(desc(numero))%>% # reordenala de mayor a menor
+  DT::datatable() # mira la data
+  
+    
+```
+
+Asi como clasificandola por la cantidad de estas mismas que lograron una **reversion**, obtenemos la tabla resumen 2
+
+```{r grafico_general2, echo=FALSE,fig.height=30,comment=F,warning=FALSE,message=FALSE,cache=FALSE,fig.width=10, fig.height=15,fig.cap = "Tabla Resumen 2"}
+barreras %>% # la BD!
+  group_by(`REVERSION`) %>% # agrupala segun...
+  summarise(numero=n())%>% # crea una nueva variable
+  arrange(desc(numero))%>% # reordenala de mayor a menor
+  DT::datatable() # mira la data
+  
+    
+```
+
+En la siguiente grafica vemos el tipo de actuacion del estudio realizado
+
+```{r grafico_general22, echo=FALSE,fig.height=30,comment=F,warning=FALSE,message=FALSE,cache=FALSE,fig.width=8, fig.height=5,fig.cap = "Grafica1"}
+exa3 <- # crear 
+  barreras %>% # del data frame completo
+  group_by(`TIPO DE ACTUACIÓN`) %>% # agrupala segun...
+  summarise(numero=n())%>%
+  arrange(desc(numero))
+exa4<-
+  exa3 %>%
+  mutate(porcentaje = (`numero`/sum(numero))*100 )
+bp<- ggplot(exa4, aes(x="", y=porcentaje, fill=`TIPO DE ACTUACIÓN`))+
+  geom_bar(width = 1, stat = "identity")
+bp
+
+``` 
+    
+ 
+Por ultimo como analisis exploratorio podemos analizar el tipo de **materia** por la cual se presento dicha barrera burocratica
+
+```{r grafico_general3, echo=FALSE,fig.height=30,comment=F,warning=FALSE,message=FALSE,cache=FALSE,fig.width=10, fig.height=15,fig.cap = "Tabla Resumen 3"}
+barreras %>% # la BD!
+  group_by(`MATERIA`) %>% # agrupala segun...
+  summarise(numero=n())%>% # crea una nueva variable
+  arrange(desc(numero))%>% # reordenala de mayor a menor
+  DT::datatable() # mira la data
+    
+```
+
+## Relaciones de la data
+
+En este grafico vemos la matriz de interrelaciones de este proceso
+
+```{r grafico2, fig.margin = TRUE, fig.cap = "Comportamiento de las barreras", fig.width=10, fig.height=15, cache=FALSE,echo=FALSE}
+parcats(p, marginal_histograms = TRUE, data_input = barreras3)
+```
+
+
+# Recordatorio final
+
+
+> _Sólo cuando conoces cada detalle de la condición del terreno puedes maniobrar y luchar.._
+>
+> `r quote_footer('--- Sun Tzu')`
+
+
+![El arte de la guerra](https://okdiario.com/img/2018/06/14/las-mejores-frases-de-sun-tzu-655x368.jpg)
